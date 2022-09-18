@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    html, body {height: 100%; text-align: center;}
+    #rendered {height: 70%; width: 80%; border:1px solid black; margin: auto; }
+    #label {width: 80%; margin: auto;}
+    #performance_note { font-size: small; color: gray; }
+    #frames_list {
+      list-style: none; text-align: left; height: 20%; overflow: scroll;
+    }
+    #frames_list   li { padding: 0.2em; margin: 0.2em; }
+    .selected { background-color: #e0e0e0; }
+    .selected a { color: black; text-decoration: none; }
+    #rendered svg { height: 100% !important; width: 100% !important; }
+  </style>
+</head>
+<body>
+  <script src="https://www.gstatic.com/external_hosted/hpcc_js_wasm/index.min.js"
+      integrity="sha384-LigJPbR3TOfU/Xbb+PjiN1dGJYPweLk7kiGnaMgmxnUmKWaCFKbb5tH6iLlyVhPZ"
+      crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/external_hosted/svg_pan_zoom/svg-pan-zoom.js">
+  </script>
+
+  <title>Fusion Explorer: cluster_4__XlaCompiledKernel_true__XlaHasReferenceVars_false__XlaNumConstantArgs_0__XlaNumResourceArgs_2_.14_cluster_4__XlaCompiledKernel_true__XlaHasReferenceVars_false__XlaNumConstantArgs_0__XlaNumResourceArgs_2_.14</title>
+  <div id='rendered'><center>Loading...</center></div>
+  <ul id='frames_list'></ul>
+  <p>Use j/k for keyboard navigation.</p>
+  <p id='performance_note'>Loading data...</p>
+  <script>
+  <!--
+  const renderCache = {};
+
+  const cssregex = new RegExp('stylesheet=<([^]*)\n>\n', 'gm');
+  const hpccWasm = window["@hpcc-js/wasm"];
+
+  const getIdFromHash = () => {
+    let hash = window.location.hash;
+    if (hash.indexOf('frame') == -1) {
+      return 0;
+    }
+    return parseInt(window.location.hash.substring('#frame'.length, window.location.hash.length));
+  }
+
+  const renderCurrentFrame = () => {
+    if (!window.loaded) { return; }
+    const frames_list = document.getElementById('frames_list');
+    const currId = getIdFromHash();
+
+    for (let selected of frames_list.getElementsByClassName('selected')) {
+        selected.classList.remove('selected');
+    }
+
+    const selected = frames_list.children[currId];
+    selected.classList.add('selected');
+    selected.scrollIntoView();
+
+    const frame = frames[currId];
+    const dot_ptr = frame[0];
+    let dot_txt = window.dots[dot_ptr];
+    const label = frame[1];
+    document.getElementById('performance_note').innerText = "Rendering...";
+    const results = cssregex.exec(dot_txt)
+    let css_data = ''
+    if (results !== null) {
+        css_data = results[1].replace(/\s*data:.*\s*,/,''); // Strip content-type field.
+        // CSS inside DOT is URL-escaped, so we must unescape it
+        // before we can insert it into SVG.
+        css_data = unescape(css_data);
+        dot_txt = dot_txt.replace(cssregex, ''); // Remove the stylesheet
+    }
+
+    let render_start = performance.now();
+    const render_callback = svg => {
+      renderCache[dot_ptr] = svg;
+      var area = document.getElementById('rendered');
+      area.innerHTML = `${svg}<style>${css_data}</style>`;
+      var panzoom = svgPanZoom(area.children[0], {
+          zoomEnabled: true, controlIconsEnabled: true, });
+      var to_highlight = frame[2].length ?
+        document.querySelector(`${frame[2]}`) : null;
+      if (to_highlight) {
+        to_highlight.style.setProperty('fill', 'red');
+      }
+      document.getElementById('performance_note').innerText =
+        `Rendering took ${(performance.now() - render_start).toFixed(2)}ms`;
+    };
+    if (renderCache[dot_ptr]) {
+      render_callback(renderCache[dot_ptr]);
+    } else {
+      hpccWasm.graphviz.layout(dot_txt, "svg", "dot").then(render_callback);
+    }
+  };
+
+  const update = (delta) => {
+    let currId = getIdFromHash();
+    currId = (currId + delta + frames.length) % frames.length;
+    window.location.hash = `#frame${currId}`
+  };
+
+  const renderFrameList = () => {
+    const currId = getIdFromHash();
+    const frames_list = document.getElementById('frames_list');
+    for (let i=0; i<frames.length; i++) {
+      const f = frames[i];
+      let frame_descr = f[1];
+      const rendered = document.createElement("li");
+      if (frame_descr == "") {
+        frame_descr = "Unnamed state";
+      }
+      rendered.innerHTML = `<a href="#frame${i}">${frame_descr}</a>`;
+      if (i == currId) {
+        rendered.classList.add('selected');
+      }
+      frames_list.appendChild(rendered);
+    }
+  };
+
+  const decompress = async function(compressed) {
+    const ds = new DecompressionStream('gzip');
+    const in_fetch = await fetch(`data:application/octet-stream;base64,${compressed}`);
+    const in_blob = await in_fetch.blob();
+    const out_stream = in_blob.stream().pipeThrough(ds);
+    const out_blob = await new Response(out_stream).blob();
+    return await out_blob.text();
+  }
+
+  const dots_compressed = "H4sIAAAAAAAAA9VYj2/iNhT+VzymqXcSDUlICaWF7XYnbaf96MS66aSmQiZ5gajGjmynPXbq/vbZSaGBuJDm6KQiAfJzvve9L99z0OOqFSUzjtM5+gl9CSjH9CZKOBqiyx/PAhqyRcoyGqm15BmoCMFTIGp5fj4djYFGwBM6QyxGHqIsAoEwzwFxJhJGUcioyBbAz6e8M3qvsmUSy3yDZEICn3iTySeC9U5CIPoFOAUy0Vx5/GcsxhADBxrC35iLSYyJKLZ+zxbvVXKJqXzHZ2Jir6JjECzjIeRRd2I53nlnOhqtaics1GrUstNBHxKBpwSQnKs3Y0QmqYXQR6oqAyGVMrJso6AVtFDEQNAjie4Yv/kmoA8Xq0xqL2g9ZLu4RPm9VHchDCGVCCMhlwTEHEAtVBj9Nf6oGP5kiGKZcUw0AaYooSShkGcpIRKNiLDMYYr1cWt4HlCUbw0kfJadUIi2jvyQKMO4RBknb+ZSpmLQ6cSMSmHNGJsRwGkiLOWqBnwf40VClsMxmzLJBp5tt33bfnum84jbGdKJdU8g9dI5jovrB+ioQBydlfZE8g8MkOOmn/PofUCLze/cru4LfzBnt8DRvzoA0Qz8h/QoTggZ6Khz6vci90xDd8FSLOcKJiRnN7ABLELHd0kk5wNkubDYn4yR5Ux1o6GM+gQliv5+mVHXjd14szIDrCpzBdwn05SsKnMzWx2CEkVvm6JXy00DrLmbpmQHdrPSMFWZJjcNsOZumpId2M2TbYqTWm4aYM3dNCV7aTerMmu5aZLZ2E2jzK9y092m8Gq5aYA1d9OU7MBuVo5/VabJTQOsuZumZAd209um6NZy0wBr7qYp2Uu7WZVZy02TzMZuGmV+lZvONoVby00DrLmbpmQHdrPyMK/KNLlpgDV305TswG52tymcWm4aYM3dNCV7aTerMmu5aZLZ2E2jzCZujvSH49mu47q276lPz0ZX+aQ41DPuH5jjBah5ENl6jMzn2HQVm3BISRLmE+3wSz6b3udXxF336nrURmKOUxhyCGV7NV8Og9anX99N9HQatNrFtKdiWgREOqLHqZARxlV0SnB4o4OrwLfhFEPfza9TiHU4jsGeqvD12YYa2+t5ZjXO61Nj93v9vlmN+wrVqFn7CTXd16fmpHfquGU1i0yXQJaWvxazu1TJcUI77yK86ChsQFk6kctUneLf1Or55a8D5eLv5omESuknW0asS+83Kn3i/G/F9079vtPbeF7JLCVgOY8t9CavXaXSX2/XGqIELxiNtptlDPJWNdf+mh+qKfWLH9vqVemXqe+ETljUvfrTr6jfOVUCbLd088cXF5frCsOEhwTKBaImbdwP/al/Ui0rxBh75kfM8QhVOhtzzu7mgKMhLFK5LFWF+cy1uhr02POqVqQvLnQFrfy25Iso0X9ZhjB0tx7V+Q/Ps5lty9nN7OxlLh5Em8zFkdjJ3LW8DeZ+A835z9OzmR3L3c28X3Nxa0vM65P0NPPjPdbA1Tl7vupCYkPu/i7ufbpXRCrFkydx47Rp8H3r+j8IZ0w/JBgAAA";
+  const frames = [[0, "Not fusing |multiply.8| into |tuple.13| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node6 polygon"], [0, "Not fusing |multiply.7| into |tuple.13| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node5 polygon"], [0, "Not fusing |multiply.8| into |tuple.13| as operand can not be duplicated ; multi-output fusion not supported by this pass", "#node6 polygon"], [0, "Not fusing |multiply.7| into |tuple.13| as operand can not be duplicated ; multi-output fusion not supported by this pass", "#node5 polygon"]];
+  let loaded = false;
+
+  window.addEventListener('hashchange', () => {
+    renderCurrentFrame();
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented) {
+      return;
+    }
+    if (event.key == "j") {
+      update(1);
+    } else if (event.key == "k") {
+      update(-1);
+    } else {
+      return;
+    }
+    event.preventDefault();
+  }, true);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    decompress(dots_compressed).then(text => {
+      window.dots = JSON.parse(text);
+      window.loaded = true;
+      renderFrameList();
+      renderCurrentFrame();
+    });
+  });
+
+  //-->
+  </script>
+  </body>
+</html>
+  

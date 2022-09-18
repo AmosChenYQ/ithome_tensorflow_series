@@ -1,4 +1,9 @@
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.reset_default_graph()
+
 
 OUTPUT_PATH = "../events/"
 
@@ -12,7 +17,7 @@ def main():
     tf.io.write_graph(tf.get_default_graph(), "../pb/", "model.pb", as_text=False)
     tf.io.write_graph(tf.get_default_graph(), "../pb/", "model.pbtxt", as_text=True)
 
-    tf.summary.FileWriter(OUTPUT_PATH, graph=tf.get_default_graph(), filename_suffix='_model_arch')
+    tf.summary.FileWriter(OUTPUT_PATH+"frozen_model_arch", graph=tf.get_default_graph(), filename_suffix='_model_arch')
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
@@ -24,7 +29,7 @@ def main():
         tf.io.write_graph(frozen_graph, "../pb/", "frozen_model.pb", as_text=False)
         tf.io.write_graph(frozen_graph, "../pb/", "frozen_model.pbtxt", as_text=True)
 
-        tf.summary.FileWriter(OUTPUT_PATH, graph=frozen_graph, filename_suffix='_model_value')
+        tf.summary.FileWriter(OUTPUT_PATH+"frozen_model_value", graph=frozen_graph, filename_suffix='_model_value')
 
 
 if __name__ == '__main__':

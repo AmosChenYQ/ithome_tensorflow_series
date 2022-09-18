@@ -1,5 +1,9 @@
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.reset_default_graph()
 
 OUTPUT_PATH = "../events/"
 
@@ -26,7 +30,7 @@ def save():
 
 
 def get_first_filter_value(sess):
-    tensor = tf.get_default_graph().get_tensor_by_name("conv_1/kernel/read:0")
+    tensor = tf.get_default_graph().get_tensor_by_name("conv_1/Conv2D/ReadVariableOp:0")
     return sess.run(tensor)[1, :, :, 1]
 
 

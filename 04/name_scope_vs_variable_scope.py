@@ -1,4 +1,8 @@
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.reset_default_graph()
+
 
 OUTPUT_PATH = "../events/"
 

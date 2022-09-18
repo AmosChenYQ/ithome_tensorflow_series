@@ -1,0 +1,4 @@
+Total order:
+kKernel	(no HloInstruction), kernel = fusion_2, launch dimensions = blocks: {1, 1, 1}, threads/block: {2, 1, 1}
+
+Dependencies:

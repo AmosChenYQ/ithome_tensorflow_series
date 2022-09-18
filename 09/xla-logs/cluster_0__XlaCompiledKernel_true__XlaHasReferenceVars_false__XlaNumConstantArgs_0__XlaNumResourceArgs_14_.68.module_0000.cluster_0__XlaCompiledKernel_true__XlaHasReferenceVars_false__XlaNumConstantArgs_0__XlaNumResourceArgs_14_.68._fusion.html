@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    html, body {height: 100%; text-align: center;}
+    #rendered {height: 70%; width: 80%; border:1px solid black; margin: auto; }
+    #label {width: 80%; margin: auto;}
+    #performance_note { font-size: small; color: gray; }
+    #frames_list {
+      list-style: none; text-align: left; height: 20%; overflow: scroll;
+    }
+    #frames_list   li { padding: 0.2em; margin: 0.2em; }
+    .selected { background-color: #e0e0e0; }
+    .selected a { color: black; text-decoration: none; }
+    #rendered svg { height: 100% !important; width: 100% !important; }
+  </style>
+</head>
+<body>
+  <script src="https://www.gstatic.com/external_hosted/hpcc_js_wasm/index.min.js"
+      integrity="sha384-LigJPbR3TOfU/Xbb+PjiN1dGJYPweLk7kiGnaMgmxnUmKWaCFKbb5tH6iLlyVhPZ"
+      crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/external_hosted/svg_pan_zoom/svg-pan-zoom.js">
+  </script>
+
+  <title>Fusion Explorer: cluster_0__XlaCompiledKernel_true__XlaHasReferenceVars_false__XlaNumConstantArgs_0__XlaNumResourceArgs_14_.68_cluster_0__XlaCompiledKernel_true__XlaHasReferenceVars_false__XlaNumConstantArgs_0__XlaNumResourceArgs_14_.68</title>
+  <div id='rendered'><center>Loading...</center></div>
+  <ul id='frames_list'></ul>
+  <p>Use j/k for keyboard navigation.</p>
+  <p id='performance_note'>Loading data...</p>
+  <script>
+  <!--
+  const renderCache = {};
+
+  const cssregex = new RegExp('stylesheet=<([^]*)\n>\n', 'gm');
+  const hpccWasm = window["@hpcc-js/wasm"];
+
+  const getIdFromHash = () => {
+    let hash = window.location.hash;
+    if (hash.indexOf('frame') == -1) {
+      return 0;
+    }
+    return parseInt(window.location.hash.substring('#frame'.length, window.location.hash.length));
+  }
+
+  const renderCurrentFrame = () => {
+    if (!window.loaded) { return; }
+    const frames_list = document.getElementById('frames_list');
+    const currId = getIdFromHash();
+
+    for (let selected of frames_list.getElementsByClassName('selected')) {
+        selected.classList.remove('selected');
+    }
+
+    const selected = frames_list.children[currId];
+    selected.classList.add('selected');
+    selected.scrollIntoView();
+
+    const frame = frames[currId];
+    const dot_ptr = frame[0];
+    let dot_txt = window.dots[dot_ptr];
+    const label = frame[1];
+    document.getElementById('performance_note').innerText = "Rendering...";
+    const results = cssregex.exec(dot_txt)
+    let css_data = ''
+    if (results !== null) {
+        css_data = results[1].replace(/\s*data:.*\s*,/,''); // Strip content-type field.
+        // CSS inside DOT is URL-escaped, so we must unescape it
+        // before we can insert it into SVG.
+        css_data = unescape(css_data);
+        dot_txt = dot_txt.replace(cssregex, ''); // Remove the stylesheet
+    }
+
+    let render_start = performance.now();
+    const render_callback = svg => {
+      renderCache[dot_ptr] = svg;
+      var area = document.getElementById('rendered');
+      area.innerHTML = `${svg}<style>${css_data}</style>`;
+      var panzoom = svgPanZoom(area.children[0], {
+          zoomEnabled: true, controlIconsEnabled: true, });
+      var to_highlight = frame[2].length ?
+        document.querySelector(`${frame[2]}`) : null;
+      if (to_highlight) {
+        to_highlight.style.setProperty('fill', 'red');
+      }
+      document.getElementById('performance_note').innerText =
+        `Rendering took ${(performance.now() - render_start).toFixed(2)}ms`;
+    };
+    if (renderCache[dot_ptr]) {
+      render_callback(renderCache[dot_ptr]);
+    } else {
+      hpccWasm.graphviz.layout(dot_txt, "svg", "dot").then(render_callback);
+    }
+  };
+
+  const update = (delta) => {
+    let currId = getIdFromHash();
+    currId = (currId + delta + frames.length) % frames.length;
+    window.location.hash = `#frame${currId}`
+  };
+
+  const renderFrameList = () => {
+    const currId = getIdFromHash();
+    const frames_list = document.getElementById('frames_list');
+    for (let i=0; i<frames.length; i++) {
+      const f = frames[i];
+      let frame_descr = f[1];
+      const rendered = document.createElement("li");
+      if (frame_descr == "") {
+        frame_descr = "Unnamed state";
+      }
+      rendered.innerHTML = `<a href="#frame${i}">${frame_descr}</a>`;
+      if (i == currId) {
+        rendered.classList.add('selected');
+      }
+      frames_list.appendChild(rendered);
+    }
+  };
+
+  const decompress = async function(compressed) {
+    const ds = new DecompressionStream('gzip');
+    const in_fetch = await fetch(`data:application/octet-stream;base64,${compressed}`);
+    const in_blob = await in_fetch.blob();
+    const out_stream = in_blob.stream().pipeThrough(ds);
+    const out_blob = await new Response(out_stream).blob();
+    return await out_blob.text();
+  }
+
+  const dots_compressed = "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";
+  const frames = [[0, "Not fusing |broadcast.24| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node9 polygon"], [0, "Not fusing |broadcast.24| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node9 polygon"], [0, "Not fusing |broadcast.34| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node12 polygon"], [0, "Not fusing |broadcast.34| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node12 polygon"], [0, "Not fusing |broadcast.8| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node4 polygon"], [0, "Not fusing |broadcast.8| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node4 polygon"], [0, "Not fusing |broadcast.18| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node7 polygon"], [0, "Not fusing |broadcast.18| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node7 polygon"], [0, "Not fusing |constant.38| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", ""], [0, "Not fusing |constant.37| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", ""], [0, "Not fusing |broadcast.22| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node8 polygon"], [0, "Not fusing |multiply.28| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node11 polygon"], [0, "Not fusing |broadcast.6| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node3 polygon"], [0, "Not fusing |multiply.12| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node6 polygon"], [1, "Not fusing |constant.7| into |broadcast.24| as not fusing constant ; multi-output fusion not supported by this pass", ""], [2, "Not fusing |constant.7| into |broadcast.34| as not fusing constant ; multi-output fusion not supported by this pass", ""], [3, "Not fusing |constant.7| into |broadcast.8| as not fusing constant ; multi-output fusion not supported by this pass", ""], [4, "Not fusing |constant.7| into |broadcast.18| as not fusing constant ; multi-output fusion not supported by this pass", ""], [5, "Not fusing |constant.5| into |broadcast.22| as not fusing constant ; multi-output fusion not supported by this pass", ""], [6, "About to fuse |broadcast.27| into |multiply.28| inside InstructionFusion with may_duplicate=0", "#node2 polygon"], [7, "Fused |broadcast.27| into |fusion| inside InstructionFusion with may_duplicate=0", ""], [7, "Not fusing |constant.5| into |fusion| as fusion pass cannot duplicate ; multi-output fusion not supported by this pass", ""], [8, "Not fusing |constant.5| into |broadcast.6| as not fusing constant ; multi-output fusion not supported by this pass", ""], [9, "About to fuse |broadcast.11| into |multiply.12| inside InstructionFusion with may_duplicate=0", "#node2 polygon"], [10, "Fused |broadcast.11| into |fusion.1| inside InstructionFusion with may_duplicate=0", ""], [10, "Not fusing |constant.5| into |fusion.1| as fusion pass cannot duplicate ; multi-output fusion not supported by this pass", ""], [11, "Not fusing |broadcast.24| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node7 polygon"], [11, "Not fusing |broadcast.24| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node7 polygon"], [11, "Not fusing |broadcast.34| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node8 polygon"], [11, "Not fusing |broadcast.34| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node8 polygon"], [11, "Not fusing |broadcast.8| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node4 polygon"], [11, "Not fusing |broadcast.8| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node4 polygon"], [11, "Not fusing |broadcast.18| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node5 polygon"], [11, "Not fusing |broadcast.18| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node5 polygon"], [11, "Not fusing |constant.38| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", ""], [11, "Not fusing |constant.37| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", ""], [11, "Not fusing |broadcast.22| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node6 polygon"], [11, "Not fusing |fusion| into |tuple.67| as the producer is a fusion ; multi-output fusion not supported by this pass", "#a_clust1 path"], [11, "Not fusing |broadcast.6| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node3 polygon"], [11, "Not fusing |fusion.1| into |tuple.67| as the producer is a fusion ; multi-output fusion not supported by this pass", "#a_clust2 path"], [12, "Not fusing |constant.7| into |broadcast.24| as not fusing constant ; multi-output fusion not supported by this pass", ""], [13, "Not fusing |constant.7| into |broadcast.34| as not fusing constant ; multi-output fusion not supported by this pass", ""], [14, "Not fusing |constant.7| into |broadcast.8| as not fusing constant ; multi-output fusion not supported by this pass", ""], [15, "Not fusing |constant.7| into |broadcast.18| as not fusing constant ; multi-output fusion not supported by this pass", ""], [16, "Not fusing |constant.5| into |broadcast.22| as not fusing constant ; multi-output fusion not supported by this pass", ""], [17, "About to fuse |constant.5| into |fusion| inside InstructionFusion with may_duplicate=1", ""], [18, "Fused |constant.5| into |fusion| inside InstructionFusion with may_duplicate=1", ""], [19, "Not fusing |constant.5| into |broadcast.6| as not fusing constant ; multi-output fusion not supported by this pass", ""], [20, "About to fuse |constant.5| into |fusion.1| inside InstructionFusion with may_duplicate=1", ""], [21, "Fused |constant.5| into |fusion.1| inside InstructionFusion with may_duplicate=1", ""], [22, "Not fusing fusion |fusion.1| into all of its users due to: the consumer is not input-fusible and not loop-fusible", "#a_clust2 path"], [22, "Not fusing fusion |fusion| into all of its users due to: the consumer is not input-fusible and not loop-fusible", "#a_clust1 path"], [22, "Not fusing |broadcast.24| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node7 polygon"], [22, "Not fusing |broadcast.24| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node7 polygon"], [22, "Not fusing |broadcast.34| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node8 polygon"], [22, "Not fusing |broadcast.34| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node8 polygon"], [22, "Not fusing |broadcast.8| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node4 polygon"], [22, "Not fusing |broadcast.8| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node4 polygon"], [22, "Not fusing |broadcast.18| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node5 polygon"], [22, "Not fusing |broadcast.18| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node5 polygon"], [22, "Not fusing |constant.38| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", ""], [22, "Not fusing |constant.37| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", ""], [22, "Not fusing |broadcast.22| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node6 polygon"], [22, "Not fusing |fusion| into |tuple.67| as the producer is a fusion ; multi-output fusion not supported by this pass", "#a_clust1 path"], [22, "Not fusing |broadcast.6| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node3 polygon"], [22, "Not fusing |fusion.1| into |tuple.67| as the producer is a fusion ; multi-output fusion not supported by this pass", "#a_clust2 path"], [23, "Not fusing |constant.7| into |broadcast.24| as not fusing constant ; multi-output fusion not supported by this pass", ""], [24, "Not fusing |constant.7| into |broadcast.34| as not fusing constant ; multi-output fusion not supported by this pass", ""], [25, "Not fusing |constant.7| into |broadcast.8| as not fusing constant ; multi-output fusion not supported by this pass", ""], [26, "Not fusing |constant.7| into |broadcast.18| as not fusing constant ; multi-output fusion not supported by this pass", ""], [27, "Not fusing |constant.5| into |broadcast.22| as not fusing constant ; multi-output fusion not supported by this pass", ""], [28, "Not fusing |constant.5| into |broadcast.6| as not fusing constant ; multi-output fusion not supported by this pass", ""], [29, "Not fusing |broadcast.24| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node7 polygon"], [29, "Not fusing |broadcast.24| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node7 polygon"], [29, "Not fusing |broadcast.34| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node8 polygon"], [29, "Not fusing |broadcast.34| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node8 polygon"], [29, "Not fusing |broadcast.8| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node4 polygon"], [29, "Not fusing |broadcast.8| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node4 polygon"], [29, "Not fusing |broadcast.18| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node5 polygon"], [29, "Not fusing |broadcast.18| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node5 polygon"], [29, "Not fusing |constant.38| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", ""], [29, "Not fusing |constant.37| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", ""], [29, "Not fusing |broadcast.22| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node6 polygon"], [29, "Not fusing |fusion| into |tuple.67| as the producer is a fusion ; multi-output fusion not supported by this pass", "#a_clust1 path"], [29, "Not fusing |broadcast.6| into |tuple.67| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node3 polygon"], [29, "Not fusing |fusion.1| into |tuple.67| as the producer is a fusion ; multi-output fusion not supported by this pass", "#a_clust2 path"], [30, "Not fusing |constant.7| into |broadcast.24| as not fusing constant ; multi-output fusion not supported by this pass", ""], [31, "Not fusing |constant.7| into |broadcast.34| as not fusing constant ; multi-output fusion not supported by this pass", ""], [32, "Not fusing |constant.7| into |broadcast.8| as not fusing constant ; multi-output fusion not supported by this pass", ""], [33, "Not fusing |constant.7| into |broadcast.18| as not fusing constant ; multi-output fusion not supported by this pass", ""], [34, "Not fusing |constant.5| into |broadcast.22| as not fusing constant ; multi-output fusion not supported by this pass", ""], [35, "Not fusing |constant.5| into |broadcast.6| as not fusing constant ; multi-output fusion not supported by this pass", ""], [36, "Not fusing fusion |fusion.1| into all of its users due to: the consumer is not input-fusible and not loop-fusible", "#a_clust2 path"], [36, "Not fusing fusion |fusion| into all of its users due to: the consumer is not input-fusible and not loop-fusible", "#a_clust1 path"]];
+  let loaded = false;
+
+  window.addEventListener('hashchange', () => {
+    renderCurrentFrame();
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented) {
+      return;
+    }
+    if (event.key == "j") {
+      update(1);
+    } else if (event.key == "k") {
+      update(-1);
+    } else {
+      return;
+    }
+    event.preventDefault();
+  }, true);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    decompress(dots_compressed).then(text => {
+      window.dots = JSON.parse(text);
+      window.loaded = true;
+      renderFrameList();
+      renderCurrentFrame();
+    });
+  });
+
+  //-->
+  </script>
+  </body>
+</html>
+  

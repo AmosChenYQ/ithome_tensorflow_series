@@ -1,6 +1,9 @@
 import cv2
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import numpy as np
+
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.reset_default_graph()
 
 OUTPUT_PATH = "../events/"
 NUM_FILTERS = 10
@@ -30,12 +33,12 @@ def layer(input_node):
 
     return out
 
+# remote slim because api loses it
+# def slim(input_node):
+#     out = tf.contrib.slim.conv2d(input_node, NUM_FILTERS, FILTER_SIZE, stride=STRIDES, padding='SAME',
+#                                  activation_fn=None, scope='slim')
 
-def slim(input_node):
-    out = tf.contrib.slim.conv2d(input_node, NUM_FILTERS, FILTER_SIZE, stride=STRIDES, padding='SAME',
-                                 activation_fn=None, scope='slim')
-
-    return out
+#     return out
 
 
 def keras(input_node):
@@ -50,7 +53,7 @@ if __name__ == '__main__':
 
     nn_out = nn(node)
     layer_out = layer(node)
-    slim_out = slim(node)
+    # slim_out = slim(node)
     keras_out = keras(node)
 
     tf.summary.FileWriter(OUTPUT_PATH, graph=tf.get_default_graph())
@@ -62,10 +65,13 @@ if __name__ == '__main__':
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
 
-        nn_result, layer_result, slim_result, keras_result = \
-            sess.run([nn_out, layer_out, slim_out, keras_out], feed_dict={node: image})
+        # nn_result, layer_result, slim_result, keras_result = \
+        #     sess.run([nn_out, layer_out, slim_out, keras_out], feed_dict={node: image})
+        
+        nn_result, layer_result, keras_result = \
+            sess.run([nn_out, layer_out, keras_out], feed_dict={node: image})
 
         print(f'nn shape: {nn_result.shape}')
         print(f'layer shape: {layer_result.shape}')
-        print(f'slim shape: {slim_result.shape}')
+        # print(f'slim shape: {slim_result.shape}')
         print(f'keras shape: {keras_result.shape}')

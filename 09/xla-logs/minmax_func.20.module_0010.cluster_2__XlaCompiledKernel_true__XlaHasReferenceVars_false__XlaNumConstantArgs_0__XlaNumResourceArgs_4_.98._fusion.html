@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    html, body {height: 100%; text-align: center;}
+    #rendered {height: 70%; width: 80%; border:1px solid black; margin: auto; }
+    #label {width: 80%; margin: auto;}
+    #performance_note { font-size: small; color: gray; }
+    #frames_list {
+      list-style: none; text-align: left; height: 20%; overflow: scroll;
+    }
+    #frames_list   li { padding: 0.2em; margin: 0.2em; }
+    .selected { background-color: #e0e0e0; }
+    .selected a { color: black; text-decoration: none; }
+    #rendered svg { height: 100% !important; width: 100% !important; }
+  </style>
+</head>
+<body>
+  <script src="https://www.gstatic.com/external_hosted/hpcc_js_wasm/index.min.js"
+      integrity="sha384-LigJPbR3TOfU/Xbb+PjiN1dGJYPweLk7kiGnaMgmxnUmKWaCFKbb5tH6iLlyVhPZ"
+      crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/external_hosted/svg_pan_zoom/svg-pan-zoom.js">
+  </script>
+
+  <title>Fusion Explorer: cluster_2__XlaCompiledKernel_true__XlaHasReferenceVars_false__XlaNumConstantArgs_0__XlaNumResourceArgs_4_.98_minmax_func.20</title>
+  <div id='rendered'><center>Loading...</center></div>
+  <ul id='frames_list'></ul>
+  <p>Use j/k for keyboard navigation.</p>
+  <p id='performance_note'>Loading data...</p>
+  <script>
+  <!--
+  const renderCache = {};
+
+  const cssregex = new RegExp('stylesheet=<([^]*)\n>\n', 'gm');
+  const hpccWasm = window["@hpcc-js/wasm"];
+
+  const getIdFromHash = () => {
+    let hash = window.location.hash;
+    if (hash.indexOf('frame') == -1) {
+      return 0;
+    }
+    return parseInt(window.location.hash.substring('#frame'.length, window.location.hash.length));
+  }
+
+  const renderCurrentFrame = () => {
+    if (!window.loaded) { return; }
+    const frames_list = document.getElementById('frames_list');
+    const currId = getIdFromHash();
+
+    for (let selected of frames_list.getElementsByClassName('selected')) {
+        selected.classList.remove('selected');
+    }
+
+    const selected = frames_list.children[currId];
+    selected.classList.add('selected');
+    selected.scrollIntoView();
+
+    const frame = frames[currId];
+    const dot_ptr = frame[0];
+    let dot_txt = window.dots[dot_ptr];
+    const label = frame[1];
+    document.getElementById('performance_note').innerText = "Rendering...";
+    const results = cssregex.exec(dot_txt)
+    let css_data = ''
+    if (results !== null) {
+        css_data = results[1].replace(/\s*data:.*\s*,/,''); // Strip content-type field.
+        // CSS inside DOT is URL-escaped, so we must unescape it
+        // before we can insert it into SVG.
+        css_data = unescape(css_data);
+        dot_txt = dot_txt.replace(cssregex, ''); // Remove the stylesheet
+    }
+
+    let render_start = performance.now();
+    const render_callback = svg => {
+      renderCache[dot_ptr] = svg;
+      var area = document.getElementById('rendered');
+      area.innerHTML = `${svg}<style>${css_data}</style>`;
+      var panzoom = svgPanZoom(area.children[0], {
+          zoomEnabled: true, controlIconsEnabled: true, });
+      var to_highlight = frame[2].length ?
+        document.querySelector(`${frame[2]}`) : null;
+      if (to_highlight) {
+        to_highlight.style.setProperty('fill', 'red');
+      }
+      document.getElementById('performance_note').innerText =
+        `Rendering took ${(performance.now() - render_start).toFixed(2)}ms`;
+    };
+    if (renderCache[dot_ptr]) {
+      render_callback(renderCache[dot_ptr]);
+    } else {
+      hpccWasm.graphviz.layout(dot_txt, "svg", "dot").then(render_callback);
+    }
+  };
+
+  const update = (delta) => {
+    let currId = getIdFromHash();
+    currId = (currId + delta + frames.length) % frames.length;
+    window.location.hash = `#frame${currId}`
+  };
+
+  const renderFrameList = () => {
+    const currId = getIdFromHash();
+    const frames_list = document.getElementById('frames_list');
+    for (let i=0; i<frames.length; i++) {
+      const f = frames[i];
+      let frame_descr = f[1];
+      const rendered = document.createElement("li");
+      if (frame_descr == "") {
+        frame_descr = "Unnamed state";
+      }
+      rendered.innerHTML = `<a href="#frame${i}">${frame_descr}</a>`;
+      if (i == currId) {
+        rendered.classList.add('selected');
+      }
+      frames_list.appendChild(rendered);
+    }
+  };
+
+  const decompress = async function(compressed) {
+    const ds = new DecompressionStream('gzip');
+    const in_fetch = await fetch(`data:application/octet-stream;base64,${compressed}`);
+    const in_blob = await in_fetch.blob();
+    const out_stream = in_blob.stream().pipeThrough(ds);
+    const out_blob = await new Response(out_stream).blob();
+    return await out_blob.text();
+  }
+
+  const dots_compressed = "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";
+  const frames = [[0, "Not fusing |select.30| into |tuple.31| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node10 polygon"], [0, "Not fusing |select.26| into |tuple.31| as the consumer is not input-fusible and not loop-fusible ; multi-output fusion not supported by this pass", "#node6 polygon"], [1, "About to fuse |select.27| into |select.30| inside InstructionFusion with may_duplicate=0", "#node7 polygon"], [2, "Fused |select.27| into |fusion.1| inside InstructionFusion with may_duplicate=0", ""], [2, "About to fuse |minimum.29| into |fusion.1| inside InstructionFusion with may_duplicate=0", "#node8 polygon"], [3, "Fused |minimum.29| into |fusion.1| inside InstructionFusion with may_duplicate=0", ""], [3, "About to fuse |compare.28| into |fusion.1| inside InstructionFusion with may_duplicate=0", "#node7 polygon"], [4, "Fused |compare.28| into |fusion.1| inside InstructionFusion with may_duplicate=0", ""], [4, "Not fusing |compare.25| into |fusion.1| as fusion pass cannot duplicate ; multi-output fusion not supported by this pass", "#node5 polygon"], [5, "Not fusing |compare.25| into |select.26| as fusion pass cannot duplicate ; multi-output fusion not supported by this pass", "#node5 polygon"], [6, "Not fusing |fusion.1| into |tuple.31| as operand can not be duplicated ; multi-output fusion not supported by this pass", "#a_clust1 path"], [6, "Not fusing |select.26| into |tuple.31| as operand can not be duplicated ; multi-output fusion not supported by this pass", "#node6 polygon"], [7, "About to fuse |compare.25| into |fusion.1| inside InstructionFusion with may_duplicate=1", "#node5 polygon"], [8, "Fused |compare.25| into |fusion.1| inside InstructionFusion with may_duplicate=1", ""], [9, "About to fuse |compare.25| into |select.26| inside InstructionFusion with may_duplicate=1", "#node5 polygon"], [10, "Fused |compare.25| into |fusion.6| inside InstructionFusion with may_duplicate=1", ""], [11, "Not fusing fusion |fusion.6| into all of its users due to: the consumer is not input-fusible and not loop-fusible", "#a_clust2 path"], [11, "Not fusing fusion |fusion.1| into all of its users due to: the consumer is not input-fusible and not loop-fusible", "#a_clust1 path"], [12, "About to fuse producer |fusion.6| into consumer |fusion.1| inside GPU multi-output fusion", "#a_clust2 path"], [13, "Fused into consumer |fusion.1| inside GPU multi-output fusion", ""], [14, "Not fusing fusion |fusion.1| into all of its users due to: the consumer is not input-fusible and not loop-fusible", "#a_clust1 path"], [14, "Not fusing fusion |fusion.1| into all of its users due to: the consumer is not input-fusible and not loop-fusible", "#a_clust1 path"]];
+  let loaded = false;
+
+  window.addEventListener('hashchange', () => {
+    renderCurrentFrame();
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented) {
+      return;
+    }
+    if (event.key == "j") {
+      update(1);
+    } else if (event.key == "k") {
+      update(-1);
+    } else {
+      return;
+    }
+    event.preventDefault();
+  }, true);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    decompress(dots_compressed).then(text => {
+      window.dots = JSON.parse(text);
+      window.loaded = true;
+      renderFrameList();
+      renderCurrentFrame();
+    });
+  });
+
+  //-->
+  </script>
+  </body>
+</html>
+  

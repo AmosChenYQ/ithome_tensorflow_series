@@ -1,0 +1,19 @@
+Total order:
+kKernel    	(no HloInstruction), kernel = broadcast_11, launch dimensions = blocks: {625, 1, 1}, threads/block: {125, 2, 1}
+kGemm      	(no HloInstruction)
+kKernel    	(no HloInstruction), kernel = fusion_4, launch dimensions = blocks: {48, 1, 1}, threads/block: {128, 1, 1}
+kKernel    	(no HloInstruction), kernel = broadcast_37, launch dimensions = blocks: {98, 1, 1}, threads/block: {256, 1, 1}
+kGemm      	(no HloInstruction)
+kKernel    	(no HloInstruction), kernel = reduce_45, launch dimensions = blocks: {10, 1, 1}, threads/block: {256, 1, 1}
+kKernel    	(no HloInstruction), kernel = fusion_7, launch dimensions = blocks: {10, 1, 1}, threads/block: {256, 1, 1}
+kKernel    	(no HloInstruction), kernel = fusion_2, launch dimensions = blocks: {98, 1, 1}, threads/block: {256, 1, 1}
+kKernel    	(no HloInstruction), kernel = iota_65, launch dimensions = blocks: {98, 1, 1}, threads/block: {256, 1, 1}
+kKernel    	(no HloInstruction), kernel = reduce_78, launch dimensions = blocks: {10, 1, 1}, threads/block: {1024, 1, 1}
+kKernel    	(no HloInstruction), kernel = iota_19, launch dimensions = blocks: {98, 1, 1}, threads/block: {256, 1, 1}
+kKernel    	(no HloInstruction), kernel = reduce_32, launch dimensions = blocks: {10, 1, 1}, threads/block: {1024, 1, 1}
+kSequential	(no HloInstruction)
+  kKernel	, kernel = input_fusion_reduce, launch dimensions = blocks: {1, 1, 1}, threads/block: {640, 1, 1}
+
+kKernel    	(no HloInstruction), kernel = multiply, launch dimensions = blocks: {1, 1, 1}, threads/block: {1, 1, 1}
+
+Dependencies:
